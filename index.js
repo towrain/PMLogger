@@ -8,7 +8,6 @@ import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
 import axios from 'axios';
 import MaterialIcon from 'material-icons-react';
-// import Radio from '@material-ui/core/Radio';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import moment from 'moment';
@@ -31,10 +30,13 @@ class QaLogger extends React.Component {
     	followUpStyle:{display: 'none'},
     	buildECDstyle:{display: 'none'},
     	dsStyle:{display: 'none'},
+    	//findMore:{display: 'none'},
+    	findMore:{'backgroundColor': '#FFB300'},
 
     	icon:"add_circle_outline",
     	iconColor:"#2196F3",
     	soText:"SO Order",
+    	expendIcon : "view_carousel",
 
     	icmsValue : '',
     	icmsValue2 :'',
@@ -44,6 +46,12 @@ class QaLogger extends React.Component {
     	itoolValue:'',
     	notesValue:'',
     	buildECDValue:'',
+    	followUpValue:'0',
+    	dsValue:'',
+    	rspValue:'0',
+    	rspValue2s:[],
+    	pmTypeValue:'0',
+    	portalStatusValue:'0',
     	startDate: moment().add(4, "days"),
     	expendInitial :'expend',
     };
@@ -66,10 +74,29 @@ class QaLogger extends React.Component {
             cpID:event.target.value,
           }
     }).then(response => {
-    	console.log("abc  i cder")
+    	var result = response.data;
+    	var resultLength = result.length
+    	console.log(resultLength)
+    	if(resultLength === 0 && this.state.portalID.length > 0 ){
+    		const element = <var style={{'color':'#F4511E'}}>Order Not Existing in DataBase, Please Provide As Much Information As Possible</var>;
+    		ReactDOM.render(element, document.getElementById('extraInfor'));
+    	}
+    	else if(this.state.portalID.length > 0){
+    		const element = <strong style={{'color':'#388E3C'}}>Check Below for Order History </strong>;
+    		ReactDOM.render(element, document.getElementById('extraInfor'));
+    	}
+    	else{
+			const element = <small></small>;
+    		ReactDOM.render(element, document.getElementById('extraInfor'));    		
+    	}
     });
   	this.setState({portalID:event.target.value})
   };
+  componentDidMount() {
+    axios.get('http://localhost/rspName').then(response => {
+      this.setState({ rspValue2s : response.data }); 
+    })
+  }
   handleICMSValue(event){this.setState({icmsValue:event.target.value})};
   handleICMSValue2(event){this.setState({icmsValue2:event.target.value})};
   handleICMSChange(event){
@@ -140,7 +167,7 @@ class QaLogger extends React.Component {
   handleDateChange(date){
     this.setState({
       startDate: date
-    });
+    })
   }
 
   handleCatChange = event => {
@@ -180,10 +207,15 @@ class QaLogger extends React.Component {
 	    	reminderStyle:{display: 'block'},
 	    	followUpStyle:{display: 'block'},
 	    	soText:"SO Orders",
+	    	expendIcon:"view_array",
   		})
   	}
   	else{
-  		this.setState({
+  		this.refeshOrders()
+  	}
+  }
+  refeshOrders = event=>{
+		this.setState({
   			expendInitial:"expend",
   			ICMSstatus: false,
 	    	Consentstatus:false,
@@ -197,60 +229,122 @@ class QaLogger extends React.Component {
 	    	reminderStyle:{display: 'none'},
 	    	followUpStyle:{display: 'none'},
 	    	soText:"SO Order",
-
+	    	expendIcon:"view_carousel",
   		})
-  	}
+  		const element = <small></small>;
+    	ReactDOM.render(element, document.getElementById('extraInfor'));  	
   }
   submitPMOrder =event =>{
-  	console.log("fk me")
+  	console.log(this.state.portalID)
+  	axios.put('http://localhost/addPMOrder', {
+	    cpID: this.state.portalID,
+	    rsp: this.state.rspValue,
+	    cpStatus: this.state.portalStatusValue,
+	    taskType: this.state.pmTypeValue,
+	    icms1: this.state.icmsValue,
+	    icms2: this.state.icmsValue2,
+	    consent: this.state.consentValue,
+	    itool: this.state.itoolValue,
+	    category: this.state.catValue,
+	    followUp: this.state.followUpValue,
+	    ds: this.state.dsValue,
+	    notes: this.state.notesValue,
+	}).then(response => {
+	    console.log("happy ending ?");
+	})
+	window.alert("order has been submitted")
   } 
   submitFeedback=event=>{
   	console.log("fk u ")
+  }
+  refeshOrderValues = event =>{
+	this.setState({
+  		icmsValue : '',
+    	icmsValue2 :'',
+    	portalID : '',
+    	consentValue :'2',
+    	catValue:'0',
+    	itoolValue:'',
+    	notesValue:'',
+    	buildECDValue:'',
+    	followUpValue:'0',
+    	dsValue:'',
+    	rspValue:'0',
+    	pmTypeValue:'0',
+    	portalStatusValue:'0',
+    	startDate: moment().add(4, "days"),
+    	dsStyle:{display: 'none'},
+  	})
+	const element = <small></small>;
+	ReactDOM.render(element, document.getElementById('extraInfor')); 
+  }
+  redoAll = event => {
+  	var confirm = window.confirm("Please be aware All date will be erased ! ")
+  	if(confirm === true){
+	  	this.refeshOrderValues()
+  	}
+  	else{window.alert("Nothing Change")}
+  }
+  rspValue = event => {
+  	this.setState({rspValue:event.target.value})
+  }
+  pmTypeValue = event => {
+  	this.setState({pmTypeValue:event.target.value})
+  }
+  portalStatusValue = event => {
+  	this.setState({portalStatusValue:event.target.value})
+
   }
 
   render() {
     return (
 	    <div className="container">
+	    <br/>
 	    	<div className="input-group">
 			  <input type="text" className="form-control" value={this.state.portalID} placeholder="Portal ID" onChange={this.handlePortalValue}/>
 			  <div className="input-group-append">
 			  <Button variant="raised" color="primary" onClick={this.expendAll} >
 		        {this.state.expendInitial}
-		        <MaterialIcon icon="dashboard" color='#FAFAFA' />
+		        <MaterialIcon icon={this.state.expendIcon} color='#FAFAFA' />
 		      </Button>
-		      <Button variant="raised" color="secondary" >
+		      <Button variant="raised" color="secondary" onClick={this.redoAll} >
 		        Reset
 		        <MaterialIcon icon="undo" color='#FAFAFA' />
 		      </Button>
 			  </div>
 			</div>
+			<small id="extraInfor"></small>
 			<br />
 			<div className="table-responsive shadow p-3 mb-5 bg-white rounded">
 				<table className="table table-bordered">
 				  <tbody>
 				    <tr>
 				      <td> RSP :<br/> 
-				      	<select className="form-control" onChange={this.rspValue}>
-					    <option>1</option>
-					    <option>2</option>
-					    <option>3</option>
-					    <option>4</option>
+				      	<select className="form-control" value={this.state.rspValue} onChange={this.rspValue}>
+					    <option value="0">-- Please Choice A RSP --</option>
+				      	 {this.state.rspValue2s.map (rspValue2 => <option value= {rspValue2.name} key={rspValue2.name}>{rspValue2.name}</option>)}
 					  	</select>
 					  </td>
-				      <td> PM Type : <br/> 
-				      	<select className="form-control" onChange={this.pmTypeValue}>
-					    <option>1</option>
-					    <option>2</option>
-					    <option>3</option>
-					    <option>4</option>
+				      <td> PM Task Type : <br/> 
+				      	<select className="form-control" value={this.state.pmTypeValue} onChange={this.pmTypeValue}>
+					    <option value="0">-- Please Choice A PM Task Type --</option>
+					    <option value="QA">QA</option>
+					    <option value="Report/Acknowledged">Report/Acknowledged</option>
+					    <option value="Manage MDU  Build- Newly Created">Manage MDU  Build- Newly Created</option>
+					    <option value="Manage MDU Build -Expired Timers">Manage MDU Build -Expired Timers</option>
+					    <option value="Portal Statuses">Portal Statuses</option>
+					    <option value="Portal Tasks">Portal Tasks</option>
+					    <option value="Portal Anomalies">Portal Anomalies</option>
+					    <option value="PTA">PTA</option>
+					    <option value="Missed Commit">Missed Commit</option>
 					  	</select>
 					  </td>
 				      <td> Portal Status : <br/> 
-				      	<select className="form-control" onChange={this.portalStatusValue}>
-					    <option>1</option>
-					    <option>2</option>
-					    <option>3</option>
-					    <option>4</option>
+				      	<select className="form-control" value={this.state.portalStatusValue} onChange={this.portalStatusValue}>
+					    <option value="0">-- Please Choice A Portal Status --</option>
+					    <option value="In Progress">In Progress</option>
+					    <option value="Held">Held</option>
+					    <option value="Others">Others</option>
 					  	</select>
 					  </td>
 				    </tr>
@@ -296,7 +390,7 @@ class QaLogger extends React.Component {
 				        <div style={this.state.itoolsStyle}>  						
 							<div className="input-group">
 							<input value={this.state.itoolValue}  onChange={this.handleItoolValue} className="form-control" placeholder="ITools Number" />
-							<select className="custom-select" onChange={this.handleCatChange}>
+							<select className="custom-select" onChange={this.handleCatChange} value={this.state.catValue}>
 							    <option value="0">Undefined</option>
 							    <option value="1">Category 1</option>
 							    <option value="2">Category 2</option>
@@ -319,7 +413,8 @@ class QaLogger extends React.Component {
 						  <div className="input-group-prepend">
 						    <span className="input-group-text">From : </span>
 						  </div>
-						  <select className="custom-select" onChange={this.handleFollowUpValueChange}>
+						  <select className="custom-select" onChange={this.handleFollowUpValueChange} value={this.state.followUpValue}>
+						  	<option value="0" disabled>-- Follow Up --</option>
 						    <option value="RSP">RSP</option>
 						    <option value="DS">Delivery Specialist</option>
 						    <option value="Consent">Consent Team</option>
@@ -329,7 +424,7 @@ class QaLogger extends React.Component {
 						    <option value="Downer">Downer</option>
 						    <option value="Electronet">Electronet</option>
 						  </select>
-						   <input type="text" style={this.state.dsStyle} onChange={this.handleDSValue} className="form-control" placeholder="DS Name" />
+						   <input type="text" style={this.state.dsStyle} onChange={this.handleDSValue} value={this.state.dsValue} className="form-control" placeholder="DS Name" />
 						</div>
 						</div>
 				      	</td>
