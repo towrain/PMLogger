@@ -35,7 +35,7 @@ class QaLogger extends React.Component {
 
     	icon:"add_circle_outline",
     	iconColor:"#2196F3",
-    	soText:"SO Order",
+    	soText:"Order",
     	expendIcon : "view_carousel",
 
     	icmsValue : '',
@@ -53,6 +53,7 @@ class QaLogger extends React.Component {
     	pmTypeValue:'0',
     	portalStatusValue:'0',
     	startDate: moment().add(4, "days"),
+    	startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),
     	expendInitial :'expend',
     };
     this.handleICMSValue = this.handleICMSValue.bind(this);
@@ -105,15 +106,15 @@ class QaLogger extends React.Component {
     	this.setState({ICMSStyle:{display: 'block'}})
     }
     else{
-		this.setState({ICMSStyle:{display: 'none'},icmsValue : '',icmsValue2:'',soText:'SO Order',ICMSStyle2:{display: 'none'}});
+		this.setState({ICMSStyle:{display: 'none'},icmsValue : '',icmsValue2:'',soText:'Order',ICMSStyle2:{display: 'none'}});
     }
   };
   handleAddICMSValue(event){
 	if (this.state.icon === "add_circle_outline"){
-    	this.setState({ICMSStyle2:{display: 'block'},icon:"remove_circle_outline",iconColor:"#FF6E40",soText:"SO Orders"})	
+    	this.setState({ICMSStyle2:{display: 'block'},icon:"remove_circle_outline",iconColor:"#FF6E40",soText:"Orders"})	
     }
     else{
-	    this.setState({ICMSStyle2:{display: 'none'},icon:"add_circle_outline",iconColor:"#2196F3",icmsValue2:'',soText:"SO Order"});
+	    this.setState({ICMSStyle2:{display: 'none'},icon:"add_circle_outline",iconColor:"#2196F3",icmsValue2:'',soText:"Order"});
     }  	
   }
   handleConsentChange(event){
@@ -161,12 +162,12 @@ class QaLogger extends React.Component {
     	this.setState({followUpStyle:{display: 'block'},reminderStyle:{display: 'block'}})
     }
     else{
-		this.setState({followUpStyle:{display: 'none'},reminderStyle:{display: 'none'},notesValue:'',startDate: moment().add(4, "days"),followUpValue:''});
+		this.setState({followUpStyle:{display: 'none'},reminderStyle:{display: 'none'},notesValue:'',startDate: moment().add(4, "days"),followUpValue:'',startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),});
     }
   }
   handleDateChange(date){
     this.setState({
-      startDate: date
+      startDate: date, startDate2:moment(date).format('DD/MM/YYYY'),
     })
   }
 
@@ -206,7 +207,7 @@ class QaLogger extends React.Component {
 	    	itoolsStyle:{display: 'block'},
 	    	reminderStyle:{display: 'block'},
 	    	followUpStyle:{display: 'block'},
-	    	soText:"SO Orders",
+	    	soText:"Orders",
 	    	expendIcon:"view_array",
   		})
   	}
@@ -228,7 +229,7 @@ class QaLogger extends React.Component {
 	    	itoolsStyle:{display: 'none'},
 	    	reminderStyle:{display: 'none'},
 	    	followUpStyle:{display: 'none'},
-	    	soText:"SO Order",
+	    	soText:"Order",
 	    	expendIcon:"view_carousel",
   		})
   		const element = <small></small>;
@@ -273,6 +274,7 @@ class QaLogger extends React.Component {
     	pmTypeValue:'0',
     	portalStatusValue:'0',
     	startDate: moment().add(4, "days"),
+    	startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),
     	dsStyle:{display: 'none'},
   	})
 	const element = <small></small>;
@@ -350,7 +352,7 @@ class QaLogger extends React.Component {
 				    </tr>
 				  	<tr>
 				      <td> 
-				      	ICMS :
+				      	<span onClick={this.handleAddICMSValue}>ICMS {this.state.soText}:</span>
 			      	  	<Switch
 				          checked={this.state.ICMSstatus}
 				          onChange={this.handleICMSChange}
@@ -359,9 +361,9 @@ class QaLogger extends React.Component {
 				        />
 				        <div id="icmsID" style={this.state.ICMSStyle}>
 							<div className="input-group">
-							  <div className="input-group-prepend">
+							  {/*<div className="input-group-prepend">
 							    <span className="input-group-text" onClick={this.handleAddICMSValue}>{this.state.soText}</span>
-							  </div>
+							  </div>*/}
 							  <input value={this.state.icmsValue} onChange={this.handleICMSValue} className="form-control" placeholder="ICMS Number" />
 							  <input value={this.state.icmsValue2} style={this.state.ICMSStyle2} onChange={this.handleICMSValue2} className="form-control" placeholder="ICMS Number 2" />
 							</div>
@@ -410,9 +412,9 @@ class QaLogger extends React.Component {
 				        />	
 				        <div style= {this.state.reminderStyle}>			        
 						<div className="input-group">
-						  <div className="input-group-prepend">
+{/*						  <div className="input-group-prepend">
 						    <span className="input-group-text">From : </span>
-						  </div>
+						  </div>*/}
 						  <select className="custom-select" onChange={this.handleFollowUpValueChange} value={this.state.followUpValue}>
 						  	<option value="0" disabled>-- Follow Up --</option>
 						    <option value="RSP">RSP</option>
@@ -431,6 +433,7 @@ class QaLogger extends React.Component {
 					    <td> Reminder Date / Build ECD Date :
 					        <span style= {this.state.reminderStyle}>
 					        <hr />
+					        
 							<DatePicker
 							    selected={this.state.startDate}
 							    onChange={this.handleDateChange}
