@@ -11,6 +11,14 @@ import MaterialIcon from 'material-icons-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import moment from 'moment';
+import ReactTable from "react-table";
+import 'react-table/react-table.css';
+import {
+	ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem,
+ } from 'reactstrap';
+import treeTableHOC from "react-table/lib/hoc/treeTable";
+
+const TreeTable = treeTableHOC(ReactTable);
 
 class QaLogger extends React.Component {
   constructor(props) {
@@ -50,11 +58,14 @@ class QaLogger extends React.Component {
     	dsValue:'',
     	rspValue:'0',
     	rspValue2s:[],
-    	pmTypeValue:'0',
+			pmTypeValue:'0',
     	portalStatusValue:'0',
     	startDate: moment().add(4, "days"),
     	startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),
-    	expendInitial :'expend',
+			expendInitial :'expend',
+			
+			dropdownOpen: false,
+      splitButtonOpen: false
     };
     this.handleICMSValue = this.handleICMSValue.bind(this);
     this.handlePortalValue = this.handlePortalValue.bind(this);
@@ -68,23 +79,197 @@ class QaLogger extends React.Component {
     this.handleReminderChange = this.handleReminderChange.bind(this);
     this.handleFollowUpChange = this.handleFollowUpChange.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
+	}
+	showHistoryResult = event =>{	
+		var table = <p></p>
+		ReactDOM.render(table, document.getElementById('orderHistoryTable2'));
+	}
+	toggle = event => {
+    this.setState({
+      dropdownOpen: !this.state.dropdownOpen
+    });
+	}
+	toggleSplit = event=> {
+    this.setState({
+      splitButtonOpen: !this.state.splitButtonOpen
+    });
   }
   handlePortalValue(event){
-  	axios.get('http://localhost/getOrderHistory',{
+  	axios.get('http://localhost:83/getOrderHistory',{
+		//axios.get('/getOrderHistory',{
           params:{
             cpID:event.target.value,
           }
     }).then(response => {
     	var result = response.data;
     	var resultLength = result.length
-    	console.log(resultLength)
+			 console.log(result)
+			 console.log(resultLength)
     	if(resultLength === 0 && this.state.portalID.length > 0 ){
     		const element = <var style={{'color':'#F4511E'}}>Order Not Existing in DataBase, Please Provide As Much Information As Possible</var>;
-    		ReactDOM.render(element, document.getElementById('extraInfor'));
+				ReactDOM.render(element, document.getElementById('extraInfor'));
+				this.showHistoryResult();
+				this.setState({
+					expendInitial:"expend",
+					ICMSstatus: false,
+					Consentstatus:false,
+					Itoolstatus:false,
+					Reminderstatus:false,
+					FollowUpstatus:false,
+					ICMSStyle:{display: 'none'},
+					ICMSStyle2:{display: 'none'},
+					consnetStyle:{display: 'none'},
+					itoolsStyle:{display: 'none'},
+					reminderStyle:{display: 'none'},
+					followUpStyle:{display: 'none'},
+					soText:"Order",
+					expendIcon:"view_carousel",
+					
+					icmsValue : '',
+					icmsValue2 :'',
+					consentValue :'2',
+					catValue:'0',
+					itoolValue:'',
+					notesValue:'',
+					buildECDValue:'',
+					followUpValue:'0',
+					dsValue:'',
+					rspValue:'0',
+					pmTypeValue:'0',
+					portalStatusValue:'0',
+					startDate: moment().add(4, "days"),
+					startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),
+					dsStyle:{display: 'none'},
+				})
     	}
-    	else if(this.state.portalID.length > 0){
-    		const element = <strong style={{'color':'#388E3C'}}>Check Below for Order History </strong>;
-    		ReactDOM.render(element, document.getElementById('extraInfor'));
+    	else if(this.state.portalID.length > 0 && resultLength > 0 ){
+    		const element = <strong style={{'color':'#388E3C'}}>Check Below Tables for Order History </strong>;
+				ReactDOM.render(element, document.getElementById('extraInfor'));
+				var newDate = result[resultLength-1].followDate;
+				// console.log("i am new data type" + typeof(newDate));
+				// console.log("i am new data " + (newDate));
+				var myDate = moment(newDate, 'DD-MM-YYYY').toDate();
+				 console.log(myDate)
+				this.setState({
+					rspValue:result[resultLength-1].rsp,
+					portalStatusValue:result[resultLength-1].portalStatus,
+					icmsValue:result[resultLength-1].icms1,
+					icmsValue2:result[resultLength-1].icms2,
+					itoolValue:result[resultLength-1].itools,
+					followUpValue:result[resultLength-1].followUp,
+					startDate2:result[resultLength-1].followDate,
+					startDate : moment(myDate),
+					catValue:result[resultLength-1].cat,
+					dsValue:result[resultLength-1].dsName,
+					expendInitial:"close",
+					ICMSstatus: true,
+					Consentstatus:true,
+					Itoolstatus:true,
+					Reminderstatus:true,
+					FollowUpstatus:true,
+					ICMSStyle:{display: 'block'},
+					ICMSStyle2:{display: 'block'},
+					consnetStyle:{display: 'block'},
+					itoolsStyle:{display: 'block'},
+					reminderStyle:{display: 'block'},
+					followUpStyle:{display: 'block'},
+					soText:"Orders",
+					expendIcon:"view_array",
+				})
+				//add react table below into ID = orderHistoryTable  rspValue
+				var table = <div className="table-responsive">
+				<hr/>
+				{/* <ReactTable */}
+				<TreeTable
+					data={result}
+					pivotBy={["taskType"]}
+          columns={[//accessor: "followDate",
+								{
+									accessor: "taskType",
+								},		
+                {
+                  Header: "PM Task TYPE",
+									accessor: "taskType",
+									style:{ 'whiteSpace': 'unset'},
+                },
+                {
+                  Header: "Portal Status",
+                  accessor: "portalStatus",
+                },
+								{
+                  Header: "ITools",
+                  accessor: "itools",
+								},
+								{
+                  Header: "Catergory ",
+                  accessor: "cat",
+								},
+								
+                {
+                  Header: "ICMS",
+                  accessor: "icms1",
+                },
+                {
+                  Header: "ICMS - 2nd",
+                  accessor: "icms2",
+                },
+
+								{
+                  Header: "Follow Up From",
+                  accessor: "followUp",
+								},
+								{
+                  Header: "Follow Up From DS",
+									accessor: "dsName",
+									style:{ 'whiteSpace': 'unset'},
+								},
+								{
+                  Header: " Follow Up Date",
+									accessor: "followDate",
+								},
+								{
+                  Header: "Notes",
+									accessor: "notes",
+									style:{ 'whiteSpace': 'unset'},
+								},						
+								{
+                  Header: "Last Time Modified",
+									accessor: "created_at",
+									style:{ 'whiteSpace': 'unset'},
+								}
+					]}
+					defaultSorted={[
+            {
+              id: "created_at",
+              desc: true
+            }
+          ]}
+          defaultPageSize={5}
+					className="-striped w3-small w3-card" 
+					getTdProps={(state, rowInfo, column, instance) => {
+						return {
+							onDoubleClick: (e, handleOriginal) => {
+								console.log("It was in this row:", rowInfo.original);
+								if(rowInfo.original.followUp === 'DS'){
+									this.setState({dsStyle:{display:'block'}})
+								}
+								else{
+									this.setState({dsStyle:{display:'none'}})
+								}
+								var followingDate = moment(rowInfo.original.followDate,'DD-MM-YYYY').toDate();
+								this.setState({pmTypeValue:rowInfo.original.taskType,
+																followUpValue:rowInfo.original.followUp,
+																startDate:moment(followingDate),
+															})
+							}
+						}
+					}
+				}            
+					//style={{'textAlign' : 'center'}} //style:{ 'white-space': 'unset'},  style:{height: "400px"},
+        />
+				<hr />
+				</div>
+				ReactDOM.render(table, document.getElementById('orderHistoryTable2'));
     	}
     	else{
 			const element = <small></small>;
@@ -94,9 +279,9 @@ class QaLogger extends React.Component {
   	this.setState({portalID:event.target.value})
   };
   componentDidMount() {
-    axios.get('http://localhost/rspName').then(response => {
+    axios.get('http://localhost:83/rspName').then(response => {
       this.setState({ rspValue2s : response.data }); 
-    })
+		})
   }
   handleICMSValue(event){this.setState({icmsValue:event.target.value})};
   handleICMSValue2(event){this.setState({icmsValue2:event.target.value})};
@@ -233,31 +418,53 @@ class QaLogger extends React.Component {
 	    	expendIcon:"view_carousel",
   		})
   		const element = <small></small>;
-    	ReactDOM.render(element, document.getElementById('extraInfor'));  	
-  }
-  submitPMOrder =event =>{
-  	console.log(this.state.portalID)
-  	axios.put('http://localhost/addPMOrder', {
-	    cpID: this.state.portalID,
-	    rsp: this.state.rspValue,
-	    cpStatus: this.state.portalStatusValue,
-	    taskType: this.state.pmTypeValue,
-	    icms1: this.state.icmsValue,
-	    icms2: this.state.icmsValue2,
-	    consent: this.state.consentValue,
-	    itool: this.state.itoolValue,
-	    category: this.state.catValue,
-	    followUp: this.state.followUpValue,
-	    ds: this.state.dsValue,
-	    notes: this.state.notesValue,
-	}).then(response => {
-	    console.log("happy ending ?");
-	})
-	window.alert("order has been submitted")
-  } 
+			ReactDOM.render(element, document.getElementById('extraInfor')); 
+			//this.showHistoryResult();	this.state.portalID !== '' &&
+	}
+	validateOrder = event =>{
+		
+	}
+  submitPMOrder = event =>{ 
+		if( this.state.rspValue !== '0' && this.state.pmTypeValue !== '0' && this.state.portalStatusValue !== '0'){
+			//console.log(this.state.startDate2)
+			axios.get('http://localhost:83/addPMOrder',{
+			//axios.get('/addPMOrder',{
+				params:{
+					cpID: this.state.portalID,
+					rsp: this.state.rspValue,
+					cpStatus: this.state.portalStatusValue,
+					taskType: this.state.pmTypeValue,
+					icms1: this.state.icmsValue,
+					icms2: this.state.icmsValue2,
+					consent: this.state.consentValue,
+					itool: this.state.itoolValue,
+					category: this.state.catValue,
+					followUp: this.state.followUpValue,
+					ds: this.state.dsValue,
+					notes: this.state.notesValue,
+					followUpdate : this.state.startDate2,
+				}
+			}).then(response => {
+				console.log("happy ending ?");
+				this.refeshOrders();
+				//this.setState({rspValue:'',pmTypeValue:'',portalStatusValue:'',portalID:''})
+				this.refeshOrderValues()
+				this.showHistoryResult();
+			})
+		window.alert("order has been submitted")
+		}
+		else{
+			window.alert("Please provde basic infromation for submit PM order")
+		}
+	}
+
   submitFeedback=event=>{
   	console.log("fk u ")
-  }
+	}
+	showOrClose = event=>{
+  	console.log("fk u ")
+		
+	}
   refeshOrderValues = event =>{
 	this.setState({
   		icmsValue : '',
@@ -278,12 +485,14 @@ class QaLogger extends React.Component {
     	dsStyle:{display: 'none'},
   	})
 	const element = <small></small>;
-	ReactDOM.render(element, document.getElementById('extraInfor')); 
+	ReactDOM.render(element, document.getElementById('extraInfor'));
+	this.showHistoryResult(); 
   }
   redoAll = event => {
   	var confirm = window.confirm("Please be aware All date will be erased ! ")
   	if(confirm === true){
-	  	this.refeshOrderValues()
+			this.refeshOrderValues();
+			this.refeshOrders();
   	}
   	else{window.alert("Nothing Change")}
   }
@@ -293,18 +502,24 @@ class QaLogger extends React.Component {
   pmTypeValue = event => {
   	this.setState({pmTypeValue:event.target.value})
   }
-  portalStatusValue = event => {
+  portalStatusValueChange = event => {
   	this.setState({portalStatusValue:event.target.value})
 
-  }
+	}
+	clearID=event=>{
+		this.setState({portalID:''})
+		const element = <small></small>;
+		ReactDOM.render(element, document.getElementById('extraInfor')); 
+	}
 
   render() {
     return (
-	    <div className="container">
+	  <div className="container">
 	    <br/>
-	    	<div className="input-group">
-			  <input type="text" className="form-control" value={this.state.portalID} placeholder="Portal ID" onChange={this.handlePortalValue}/>
-			  <div className="input-group-append">
+	    <div className="input-group">
+			  <input type="text" className="form-control" value={this.state.portalID} placeholder="Portal ID" onDoubleClick={this.clearID} onChange={this.handlePortalValue} required="required"/>
+			 
+				<div className="input-group-append">
 			  <Button variant="raised" color="primary" onClick={this.expendAll} >
 		        {this.state.expendInitial}
 		        <MaterialIcon icon={this.state.expendIcon} color='#FAFAFA' />
@@ -315,10 +530,12 @@ class QaLogger extends React.Component {
 		      </Button>
 			  </div>
 			</div>
+			<small> testing order 101223460 and 101223465</small> <br/>
 			<small id="extraInfor"></small>
 			<br />
-			<div className="table-responsive shadow p-3 mb-5 bg-white rounded">
-				<table className="table table-bordered">
+			<div id="orderHistoryTable" className="table-responsive"></div>
+			<div className="table-responsive">
+				<table className="table table-bordered w3-card">
 				  <tbody>
 				    <tr>
 				      <td> RSP :<br/> 
@@ -342,7 +559,7 @@ class QaLogger extends React.Component {
 					  	</select>
 					  </td>
 				      <td> Portal Status : <br/> 
-				      	<select className="form-control" value={this.state.portalStatusValue} onChange={this.portalStatusValue}>
+				      <select className="form-control" value={this.state.portalStatusValue} onChange={this.portalStatusValueChange}>
 					    <option value="0">-- Please Choice A Portal Status --</option>
 					    <option value="In Progress">In Progress</option>
 					    <option value="Held">Held</option>
@@ -409,60 +626,69 @@ class QaLogger extends React.Component {
 				          onChange={this.handleFollowUpChange}
 				          value="FollowUpstatus"
 				          color="secondary"
-				        />	
-				        <div style= {this.state.reminderStyle}>			        
-						<div className="input-group">
-{/*						  <div className="input-group-prepend">
-						    <span className="input-group-text">From : </span>
-						  </div>*/}
-						  <select className="custom-select" onChange={this.handleFollowUpValueChange} value={this.state.followUpValue}>
-						  	<option value="0" disabled>-- Follow Up --</option>
-						    <option value="RSP">RSP</option>
-						    <option value="DS">Delivery Specialist</option>
-						    <option value="Consent">Consent Team</option>
-						    <option disabled>-- Serco --</option>
-						    <option value="VPL">VPL</option>
-						    <option value="UCG">UCG</option>
-						    <option value="Downer">Downer</option>
-						    <option value="Electronet">Electronet</option>
-						  </select>
-						   <input type="text" style={this.state.dsStyle} onChange={this.handleDSValue} value={this.state.dsValue} className="form-control" placeholder="DS Name" />
-						</div>
-						</div>
-				      	</td>
+				        />
+								<div style= {this.state.reminderStyle}>			        
+									<div className="input-group">
+										<select className="custom-select" onChange={this.handleFollowUpValueChange} value={this.state.followUpValue}>
+											<option value="0" disabled>-- Follow Up --</option>
+											<option value="RSP">RSP</option>
+											<option value="DS">Delivery Specialist</option>
+											<option value="Consent">Consent Team</option>
+											<option disabled>-- Serco --</option>
+											<option value="VPL">VPL</option>
+											<option value="UCG">UCG</option>
+											<option value="Downer">Downer</option>
+											<option value="Electronet">Electronet</option>
+										</select>
+										<input type="text" style={this.state.dsStyle} onChange={this.handleDSValue} value={this.state.dsValue} className="form-control" placeholder="DS Name" />
+									</div>
+								</div>
+				      </td>
 					    <td> Reminder Date / Build ECD Date :
-					        <span style= {this.state.reminderStyle}>
-					        <hr />
-					        
-							<DatePicker
-							    selected={this.state.startDate}
-							    onChange={this.handleDateChange}
-							    monthsShown={2}
-							    dateFormat="DD/MM/YYYY"
-							    placeholderText="Click to select a date"
-							    isClearable={true}
-							/>
-							</span>
+								<span style= {this.state.reminderStyle}>
+								<hr /> 
+								<DatePicker
+										selected={this.state.startDate}
+										onChange={this.handleDateChange}
+										monthsShown={2}
+										dateFormat="DD/MM/YYYY"
+										placeholderText="Click to select a date"
+										minDate={new Date(Date.now())}
+										isClearable={true}
+								/>
+								</span>
 					    </td>
 					    <td> Notes :
-					    <span style= {this.state.reminderStyle}>
-					    <hr />
-					    <textarea className="form-control" rows="3" value={this.state.notesValue} onChange={this.handleNotesValueChange} placeholder="Please add your notes here" ></textarea>
-					    </span>
+								<span style= {this.state.reminderStyle}>
+								<hr />
+								<textarea className="form-control" rows="3" value={this.state.notesValue} onChange={this.handleNotesValueChange} placeholder="Please add your notes here" ></textarea>
+								</span>
 					    </td>
 				    </tr>
 				  </tbody>
 				</table>
 			</div>
-      	<Button variant="raised" color="primary" onClick={this.submitPMOrder}>
-		    Submit
-		    <MaterialIcon icon="check" color="#FAFAFA" />
-		</Button>
-		<Button variant="raised" color="secondary" onClick={this.submitFeedback} style={{float: "right"}}>
-		    Feedback <br/>
-		    <MaterialIcon icon="create" color="#FAFAFA" />
-		</Button>
-	    </div>
+
+			<ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} >
+			<Button variant="raised" color="secondary" onClick={this.showOrClose}>
+				FEEDBACK  <MaterialIcon icon="highlight" color="#FAFAFA" size={20}/>
+			</Button>
+        <DropdownToggle caret color='#AD1457'/>
+        <DropdownMenu>
+          <DropdownItem>RSP</DropdownItem>
+          <DropdownItem divider />
+          <DropdownItem >Agent</DropdownItem>
+          <DropdownItem divider />
+          <DropdownItem>Service Company</DropdownItem>
+        </DropdownMenu>
+  		</ButtonDropdown>
+	
+			<Button variant="raised" color="primary" onClick={this.submitPMOrder}  style={{float: "right"}}>
+				Submit
+				<MaterialIcon icon="check" color="#FAFAFA" />
+			</Button>
+			<div id="orderHistoryTable2" className="table-responsive"></div>
+	</div>
 	)
   }
 }
