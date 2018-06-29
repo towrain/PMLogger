@@ -17,7 +17,8 @@ import {
 	ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem,
  } from 'reactstrap';
 import treeTableHOC from "react-table/lib/hoc/treeTable";
-
+import { AutoComplete } from 'antd';
+import 'antd/dist/antd.css';
 const TreeTable = treeTableHOC(ReactTable);
 
 class QaLogger extends React.Component {
@@ -63,12 +64,13 @@ class QaLogger extends React.Component {
     	startDate: moment().add(4, "days"),
     	startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),
 			expendInitial :'expend',
-			
+			submit:'complete',
+
+
 			dropdownOpen: false,
       splitButtonOpen: false
     };
     this.handleICMSValue = this.handleICMSValue.bind(this);
-    this.handlePortalValue = this.handlePortalValue.bind(this);
     this.handleItoolValue = this.handleItoolValue.bind(this);
     this.handleICMSChange = this.handleICMSChange.bind(this);
     this.handleAddICMSValue = this.handleAddICMSValue.bind(this);
@@ -77,7 +79,6 @@ class QaLogger extends React.Component {
     this.handleConsentValueChange = this.handleConsentValueChange.bind(this);
     this.handleItoolsChange = this.handleItoolsChange.bind(this);
     this.handleReminderChange = this.handleReminderChange.bind(this);
-    this.handleFollowUpChange = this.handleFollowUpChange.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
 	}
 	showHistoryResult = event =>{	
@@ -94,7 +95,7 @@ class QaLogger extends React.Component {
       splitButtonOpen: !this.state.splitButtonOpen
     });
   }
-  handlePortalValue(event){
+  handlePortalValue = event => {
   	axios.get('http://localhost:83/getOrderHistory',{
 		//axios.get('/getOrderHistory',{
           params:{
@@ -175,6 +176,7 @@ class QaLogger extends React.Component {
 					followUpStyle:{display: 'block'},
 					soText:"Orders",
 					expendIcon:"view_array",
+					submit : 'submit',
 				})
 				//add react table below into ID = orderHistoryTable  rspValue
 				var table = <div className="table-responsive">
@@ -282,7 +284,19 @@ class QaLogger extends React.Component {
     axios.get('http://localhost:83/rspName').then(response => {
       this.setState({ rspValue2s : response.data }); 
 		})
-  }
+		// axios.get('http://localhost:83/autoCompleteOrderID').then(response => {
+		// 	//console.log(response.data)
+		// 	var newAutoID =[];
+		// 	var idLength = response.data.length;
+		// 	for(var i = 0; i < idLength; i++){
+		// 	//	console.log(response.data[i].portalID)
+		// 		newAutoID.push(response.data[i].portalID.toString())
+		// 	}
+		// 	console.log(newAutoID);
+		// 	this.setState({ autoID : newAutoID }); 
+		// })
+	}
+	
   handleICMSValue(event){this.setState({icmsValue:event.target.value})};
   handleICMSValue2(event){this.setState({icmsValue2:event.target.value})};
   handleICMSChange(event){
@@ -341,13 +355,13 @@ class QaLogger extends React.Component {
 		this.setState({reminderStyle:{display: 'none'},});
     }
   }
-   handleFollowUpChange(event){
+   handleFollowUpChange = event => {
   	this.setState({ FollowUpstatus: event.target.checked });
   	if (this.state.FollowUpstatus === false){
-    	this.setState({followUpStyle:{display: 'block'},reminderStyle:{display: 'block'}})
+    	this.setState({followUpStyle:{display: 'block'},reminderStyle:{display: 'block'}, submit:'submit'})
     }
     else{
-		this.setState({followUpStyle:{display: 'none'},reminderStyle:{display: 'none'},notesValue:'',startDate: moment().add(4, "days"),followUpValue:'',startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),});
+		this.setState({followUpStyle:{display: 'none'},reminderStyle:{display: 'none'},notesValue:'',submit:'complete',startDate: moment().add(4, "days"),followUpValue:'',startDate2 : moment(moment().add(4, "days")).format('DD/MM/YYYY'),});
     }
   }
   handleDateChange(date){
@@ -393,7 +407,8 @@ class QaLogger extends React.Component {
 	    	reminderStyle:{display: 'block'},
 	    	followUpStyle:{display: 'block'},
 	    	soText:"Orders",
-	    	expendIcon:"view_array",
+				expendIcon:"view_array",
+				submit:'submit',
   		})
   	}
   	else{
@@ -415,7 +430,8 @@ class QaLogger extends React.Component {
 	    	reminderStyle:{display: 'none'},
 	    	followUpStyle:{display: 'none'},
 	    	soText:"Order",
-	    	expendIcon:"view_carousel",
+				expendIcon:"view_carousel",
+				submit:'complete'
   		})
   		const element = <small></small>;
 			ReactDOM.render(element, document.getElementById('extraInfor')); 
@@ -427,31 +443,36 @@ class QaLogger extends React.Component {
   submitPMOrder = event =>{ 
 		if( this.state.rspValue !== '0' && this.state.pmTypeValue !== '0' && this.state.portalStatusValue !== '0'){
 			//console.log(this.state.startDate2)
-			axios.get('http://localhost:83/addPMOrder',{
-			//axios.get('/addPMOrder',{
-				params:{
-					cpID: this.state.portalID,
-					rsp: this.state.rspValue,
-					cpStatus: this.state.portalStatusValue,
-					taskType: this.state.pmTypeValue,
-					icms1: this.state.icmsValue,
-					icms2: this.state.icmsValue2,
-					consent: this.state.consentValue,
-					itool: this.state.itoolValue,
-					category: this.state.catValue,
-					followUp: this.state.followUpValue,
-					ds: this.state.dsValue,
-					notes: this.state.notesValue,
-					followUpdate : this.state.startDate2,
-				}
-			}).then(response => {
-				console.log("happy ending ?");
-				this.refeshOrders();
-				//this.setState({rspValue:'',pmTypeValue:'',portalStatusValue:'',portalID:''})
-				this.refeshOrderValues()
-				this.showHistoryResult();
-			})
-		window.alert("order has been submitted")
+			if(this.state.submit === 'submit'){
+			// axios.get('http://localhost:83/addPMOrder',{
+			// 	//axios.get('/addPMOrder',{
+			// 		params:{
+			// 			cpID: this.state.portalID,
+			// 			rsp: this.state.rspValue,
+			// 			cpStatus: this.state.portalStatusValue,
+			// 			taskType: this.state.pmTypeValue,
+			// 			icms1: this.state.icmsValue,
+			// 			icms2: this.state.icmsValue2,
+			// 			consent: this.state.consentValue,
+			// 			itool: this.state.itoolValue,
+			// 			category: this.state.catValue,
+			// 			followUp: this.state.followUpValue,
+			// 			ds: this.state.dsValue,
+			// 			notes: this.state.notesValue,
+			// 			followUpdate : this.state.startDate2,
+			// 		}
+			// 		}).then(response => {
+			// 			console.log("happy ending ?");
+			// 			this.refeshOrders();
+			// 			//this.setState({rspValue:'',pmTypeValue:'',portalStatusValue:'',portalID:''})
+			// 			this.refeshOrderValues()
+			// 			this.showHistoryResult();
+			// 		})
+				window.alert(`PM order ${this.state.portalID} has been submitted, saving order to PM Table ......`)
+			}
+			else{
+				window.alert(`Thanks for completed the order ${this.state.portalID}, saving this order to ticket sheet .....`)
+			}
 		}
 		else{
 			window.alert("Please provde basic infromation for submit PM order")
@@ -511,14 +532,23 @@ class QaLogger extends React.Component {
 		const element = <small></small>;
 		ReactDOM.render(element, document.getElementById('extraInfor')); 
 	}
+	// handleSubmitText=event=>{
+	// 	if(this.state.FollowUpstatus === true){
+	// 		this.setState({submit:'submit'})
+	// 	}
+	// 	else{
+	// 		this.setState({submit:'Complete'})
+	// 	}
+	// }
+
 
   render() {
-    return (
+   return (
 	  <div className="container">
 	    <br/>
 	    <div className="input-group">
 			  <input type="text" className="form-control" value={this.state.portalID} placeholder="Portal ID" onDoubleClick={this.clearID} onChange={this.handlePortalValue} required="required"/>
-			 
+		
 				<div className="input-group-append">
 			  <Button variant="raised" color="primary" onClick={this.expendAll} >
 		        {this.state.expendInitial}
@@ -682,11 +712,12 @@ class QaLogger extends React.Component {
           <DropdownItem>Service Company</DropdownItem>
         </DropdownMenu>
   		</ButtonDropdown>
-	
+
 			<Button variant="raised" color="primary" onClick={this.submitPMOrder}  style={{float: "right"}}>
-				Submit
+			{this.state.submit}
 				<MaterialIcon icon="check" color="#FAFAFA" />
 			</Button>
+
 			<div id="orderHistoryTable2" className="table-responsive"></div>
 	</div>
 	)
